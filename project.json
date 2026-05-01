@@ -1,0 +1,8 @@
+{
+  "engine": "cocos2d-html5",
+  "packages": "packages",
+  "version": "2.4.15",
+  "name": "BlastGame",
+  "id": "e9e40166-44e7-428e-bbe5-a9ec6b1036a3",
+  "isNew": false
+}
