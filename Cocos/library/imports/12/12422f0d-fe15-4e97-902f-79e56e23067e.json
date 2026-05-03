@@ -1,0 +1,28 @@
+{
+  "__type__": "cc.SpriteFrame",
+  "content": {
+    "name": "block_rockets_horisontal",
+    "texture": "5f832f1f-aa45-4172-9870-7e41dd1ee7fa",
+    "atlas": "",
+    "rect": [
+      0,
+      12,
+      100,
+      89
+    ],
+    "offset": [
+      0,
+      -0.5
+    ],
+    "originalSize": [
+      100,
+      112
+    ],
+    "capInsets": [
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+}

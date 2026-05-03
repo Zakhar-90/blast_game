@@ -1,0 +1,28 @@
+{
+  "__type__": "cc.SpriteFrame",
+  "content": {
+    "name": "block_bomb_max",
+    "texture": "876ab252-81c3-4f5d-a853-16ad96aeb174",
+    "atlas": "",
+    "rect": [
+      9,
+      7,
+      83,
+      96
+    ],
+    "offset": [
+      0.5,
+      1
+    ],
+    "originalSize": [
+      100,
+      112
+    ],
+    "capInsets": [
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+}
