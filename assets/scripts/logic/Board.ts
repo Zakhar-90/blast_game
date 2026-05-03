@@ -2,6 +2,7 @@ import { Cell, TileColor, ALL_COLORS } from "./Cell";
 
 export class Board {
   readonly rows: number;
+
   readonly cols: number;
 
   private grid: Cell[][];
@@ -13,7 +14,6 @@ export class Board {
 
     for (let r = 0; r < rows; r++) {
       this.grid[r] = [];
-
       for (let c = 0; c < cols; c++) {
         this.grid[r][c] = new Cell(r, c);
       }
@@ -31,32 +31,11 @@ export class Board {
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
         const cell = this.grid[r][c];
-        let color: TileColor;
-
         const randomIndex = Math.floor(Math.random() * ALL_COLORS.length);
-        color = ALL_COLORS[randomIndex];
-
-        cell.color = color;
+        cell.color = ALL_COLORS[randomIndex];
       }
     }
   }
-
-  // private wouldCreateGroup(
-  //   row: number,
-  //   col: number,
-  //   color: TileColor,
-  // ): boolean {
-  //   const neighbors = [
-  //     this.getCell(row - 1, col),
-  //     this.getCell(row + 1, col),
-  //     this.getCell(row, col - 1),
-  //     this.getCell(row, col + 1),
-  //   ];
-
-  //   return neighbors.some(
-  //     (neighbor) => neighbor !== null && neighbor.color === color,
-  //   );
-  // }
 
   findGroup(row: number, col: number): Cell[] {
     const startCell = this.getCell(row, col);
@@ -120,6 +99,7 @@ export class Board {
             const targetCell = this.getCell(writeRow, c);
             if (targetCell) {
               targetCell.color = cell.color;
+              targetCell.superType = cell.superType;
               cell.clear();
             }
           }
@@ -191,5 +171,58 @@ export class Board {
     }
 
     return newTiles;
+  }
+
+  hasValidMoves(): boolean {
+    for (let r = 0; r < this.rows; r++) {
+      for (let c = 0; c < this.cols; c++) {
+        const group = this.findGroup(r, c);
+        if (group.length >= 2) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  shuffle(): void {
+    const colors: (TileColor | null)[] = [];
+    for (let r = 0; r < this.rows; r++) {
+      for (let c = 0; c < this.cols; c++) {
+        colors.push(this.grid[r][c].color);
+      }
+    }
+
+    for (let i = colors.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [colors[i], colors[j]] = [colors[j], colors[i]];
+    }
+
+    let index = 0;
+    for (let r = 0; r < this.rows; r++) {
+      for (let c = 0; c < this.cols; c++) {
+        this.grid[r][c].color = colors[index++];
+      }
+    }
+  }
+
+  getAllCells(): Cell[] {
+    const result: Cell[] = [];
+    for (let r = 0; r < this.rows; r++) {
+      for (let c = 0; c < this.cols; c++) {
+        result.push(this.grid[r][c]);
+      }
+    }
+    return result;
+  }
+
+  clone(): Board {
+    const board = new Board(this.rows, this.cols);
+    for (let r = 0; r < this.rows; r++) {
+      for (let c = 0; c < this.cols; c++) {
+        board.grid[r][c] = this.grid[r][c].clone();
+      }
+    }
+    return board;
   }
 }

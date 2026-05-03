@@ -1,7 +1,7 @@
 const { ccclass, property } = cc._decorator;
 
 import { Board } from "./logic/Board";
-import { Cell } from "./logic/Cell";
+import { Cell, SuperTileType } from "./logic/Cell";
 import TileView from "./TileView";
 
 @ccclass
@@ -15,8 +15,9 @@ export default class BoardView extends cc.Component {
   @property
   tileSizeHeight: number = 112;
 
-  private rows: number = 8;
-  private cols: number = 8;
+  private rows: number = 9;
+
+  private cols: number = 9;
 
   private tileViews: Map<string, TileView> = new Map();
 
@@ -34,34 +35,46 @@ export default class BoardView extends cc.Component {
     const totalHeight = this.rows * this.tileSizeHeight;
     this.node.setPosition(
       -totalWidth / 2 + this.tileSizeWidth / 2,
-      totalHeight / 2 - this.tileSizeHeight / 2,
+      totalHeight / 2 - this.tileSizeHeight / 2 + 64,
     );
 
-    this.render(board);
+    this.initialBuild(board);
   }
 
-  render(board: Board): void {
-    
-    const keysToRemove: string[] = [];
-
-    for (let [key, val] of this.tileViews) {
-      cc.log(`Key - Value: ${key} - ${val} `)
-    }
-
-    this.tileViews.forEach((tileView, key) => {
-      const cell = board.getCell(tileView.row, tileView.col);
-
-      if (!cell || cell.isEmpty || cell.color !== tileView.currentColor) {
-        keysToRemove.push(key);
-      }
+  private initialBuild(board: Board): void {
+    this.tileViews.forEach((tileView) => {
+      tileView.node.destroy();
     });
+    this.tileViews.clear();
 
-    for (const key of keysToRemove) {
-      const tileView = this.tileViews.get(key);
-      if (tileView) {
-        tileView.node.destroy();
-        this.tileViews.delete(key);
+    for (let r = 0; r < this.rows; r++) {
+      for (let c = 0; c < this.cols; c++) {
+        const cell = board.getCell(r, c);
+        if (!cell || cell.isEmpty) continue;
+
+        this.createTile(cell, r, c);
       }
+    }
+  }
+
+  fullRebuild(
+    board: Board,
+    gravityMoves: Array<{
+      fromRow: number;
+      fromCol: number;
+      toRow: number;
+      toCol: number;
+    }>,
+  ): void {
+    this.tileViews.forEach((tileView) => {
+      tileView.node.destroy();
+    });
+    this.tileViews.clear();
+
+    const moveMap = new Map<string, { fromRow: number; fromCol: number }>();
+    for (const move of gravityMoves) {
+      const key = `${move.toRow}_${move.toCol}`;
+      moveMap.set(key, { fromRow: move.fromRow, fromCol: move.fromCol });
     }
 
     for (let r = 0; r < this.rows; r++) {
@@ -69,22 +82,35 @@ export default class BoardView extends cc.Component {
         const cell = board.getCell(r, c);
         if (!cell || cell.isEmpty) continue;
 
-        const key = this.makeKey(r, c);
-        if (!this.tileViews.has(key)) {
-          this.createTile(cell);
+        const moveKey = `${r}_${c}`;
+        const moveInfo = moveMap.get(moveKey);
+
+        let displayRow = r;
+        let displayCol = c;
+
+        if (moveInfo) {
+          displayRow = moveInfo.fromRow;
+          displayCol = moveInfo.fromCol;
         }
+
+        this.createTile(cell, displayRow, displayCol, r, c);
       }
     }
   }
 
-  private createTile(cell: Cell): void {
+  private createTile(
+    cell: Cell,
+    visualRow: number,
+    visualCol: number,
+    logicalRow?: number,
+    logicalCol?: number,
+  ): void {
     if (!this.tilePrefab) {
       cc.error("tilePrefab не назначен в BoardView!");
       return;
     }
 
     const node = cc.instantiate(this.tilePrefab);
-
     node.parent = this.node;
 
     const tileView = node.getComponent(TileView);
@@ -94,26 +120,30 @@ export default class BoardView extends cc.Component {
       return;
     }
 
-    if (cell.color) {
+    if (cell.isSuperTile && cell.superType !== SuperTileType.None) {
+      tileView.setSuperTile(cell.superType);
+    } else if (cell.color) {
       tileView.setColor(cell.color);
     }
 
-    tileView.row = cell.row;
-    tileView.col = cell.col;
+    const actualRow = logicalRow !== undefined ? logicalRow : visualRow;
+    const actualCol = logicalCol !== undefined ? logicalCol : visualCol;
 
-    const x = cell.col * this.tileSizeWidth;
-    const y = -cell.row * this.tileSizeHeight;
+    tileView.row = actualRow;
+    tileView.col = actualCol;
+
+    const x = visualCol * this.tileSizeWidth;
+    const y = -visualRow * this.tileSizeHeight;
     node.setPosition(x, y);
 
     node.on(cc.Node.EventType.TOUCH_END, (event: cc.Event.EventTouch) => {
       event.stopPropagation();
-
       if (this.gameController) {
-        this.gameController.onTileClick(cell.row, cell.col);
+        this.gameController.onTileClick(actualRow, actualCol);
       }
     });
 
-    const key = this.makeKey(cell.row, cell.col);
+    const key = this.makeKey(actualRow, actualCol);
     this.tileViews.set(key, tileView);
   }
 
@@ -136,6 +166,25 @@ export default class BoardView extends cc.Component {
     await Promise.all(promises);
   }
 
+  async animateGravity(): Promise<void> {
+    const promises: Promise<void>[] = [];
+
+    this.tileViews.forEach((tileView) => {
+      const targetX = tileView.col * this.tileSizeWidth;
+      const targetY = -tileView.row * this.tileSizeHeight;
+
+      const promise = new Promise<void>((resolve) => {
+        cc.tween(tileView.node)
+          .to(0.4, { y: targetY, x: targetX }, { easing: "bounceOut" })
+          .call(() => resolve())
+          .start();
+      });
+      promises.push(promise);
+    });
+
+    await Promise.all(promises);
+  }
+
   async animateSpawn(): Promise<void> {
     const promises: Promise<void>[] = [];
 
@@ -144,38 +193,5 @@ export default class BoardView extends cc.Component {
     });
 
     await Promise.all(promises);
-  }
-
-  async animateGravity(): Promise<void> {
-    const promises: Promise<void>[] = [];
-
-    this.tileViews.forEach((tileView, key) => {
-      const targetX = tileView.col * this.tileSizeWidth;
-      const targetY = -tileView.row * this.tileSizeHeight;
-
-        cc.log('Координаты', targetX, targetY, '|', tileView.node.x, tileView.node.y);
-      if (tileView.node.x !== targetX || tileView.node.y !== targetY) {
-        cc.log('Стар анимации');
-        const promise = new Promise<void>((resolve) => {
-          cc.tween(tileView.node)
-            .to(0.5, { y: targetY, x: targetX }, { easing: "bounceOut" })
-            .call(() => resolve())
-            .start();
-        });
-        promises.push(promise);
-      }
-    });
-
-    await Promise.all(promises);
-  }
-
-  debugPrint(): void {
-    cc.log("=== TileViews Map ===");
-    this.tileViews.forEach((tileView, key) => {
-      cc.log(
-        `${key}: row=${tileView.row}, col=${tileView.col}, color=${tileView.currentColor}, pos=(${tileView.node.x}, ${tileView.node.y})`,
-      );
-    });
-    cc.log("=====================");
   }
 }

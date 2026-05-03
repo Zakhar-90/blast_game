@@ -6,6 +6,14 @@ export enum TileColor {
   Yellow = "yellow",
 }
 
+export enum SuperTileType {
+  None = "none",
+  Row = "row",
+  Column = "column",
+  Radius = "radius",
+  All = "all",
+}
+
 export const ALL_COLORS: TileColor[] = [
   TileColor.Blue,
   TileColor.Green,
@@ -14,8 +22,16 @@ export const ALL_COLORS: TileColor[] = [
   TileColor.Yellow,
 ];
 
+export const ALL_SUPER_TILE_TYPES: SuperTileType[] = [
+  SuperTileType.Row,
+  SuperTileType.Column,
+  SuperTileType.Radius,
+];
+
 export class Cell {
   color: TileColor | null = null;
+
+  superType: SuperTileType = SuperTileType.None;
 
   readonly row: number;
   readonly col: number;
@@ -29,13 +45,19 @@ export class Cell {
     return this.color === null;
   }
 
+  get isSuperTile(): boolean {
+    return this.superType !== SuperTileType.None;
+  }
+
   clear(): void {
     this.color = null;
+    this.superType = SuperTileType.None;
   }
 
   clone(): Cell {
     const cell = new Cell(this.row, this.col);
     cell.color = this.color;
+    cell.superType = this.superType;
     return cell;
   }
 }

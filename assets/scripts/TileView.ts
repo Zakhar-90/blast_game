@@ -20,15 +20,27 @@ export default class TileView extends cc.Component {
   @property(cc.SpriteFrame)
   yellowSprite: cc.SpriteFrame | null = null;
 
+  @property(cc.SpriteFrame)
+  superRowSprite: cc.SpriteFrame | null = null;
+
+  @property(cc.SpriteFrame)
+  superColumnSprite: cc.SpriteFrame | null = null;
+
+  @property(cc.SpriteFrame)
+  superRadiusSprite: cc.SpriteFrame | null = null;
+
   row: number = -1;
   col: number = -1;
 
   currentColor: string | null = null;
 
+  currentSuperType: string | null = null;
+
   setColor(color: string): void {
     if (!this.sprite) return;
 
     this.currentColor = color;
+    this.currentSuperType = null;
 
     switch (color) {
       case "blue":
@@ -46,6 +58,31 @@ export default class TileView extends cc.Component {
       case "yellow":
         this.sprite.spriteFrame = this.yellowSprite!;
         break;
+      default:
+        cc.warn(`Неизвестный цвет тайла: ${color}`);
+        break;
+    }
+  }
+
+  setSuperTile(superType: string): void {
+    if (!this.sprite) return;
+
+    this.currentColor = null;
+    this.currentSuperType = superType;
+
+    switch (superType) {
+      case "row":
+        this.sprite.spriteFrame = this.superRowSprite!;
+        break;
+      case "column":
+        this.sprite.spriteFrame = this.superColumnSprite!;
+        break;
+      case "radius":
+        this.sprite.spriteFrame = this.superRadiusSprite!;
+        break;
+      default:
+        cc.warn(`Неизвестный тип супер-тайла: ${superType}`);
+        break;
     }
   }
 
@@ -61,6 +98,7 @@ export default class TileView extends cc.Component {
   playSpawnAnimation(): Promise<void> {
     this.node.scale = 0;
     this.node.opacity = 255;
+
     return new Promise<void>((resolve) => {
       cc.tween(this.node)
         .to(0.3, { scale: 1 }, { easing: "backOut" })

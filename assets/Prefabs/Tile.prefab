@@ -132,6 +132,15 @@
     "yellowSprite": {
       "__uuid__": "80fec70a-7661-4080-990c-120760f83a0a"
     },
+    "superRowSprite": {
+      "__uuid__": "12422f0d-fe15-4e97-902f-79e56e23067e"
+    },
+    "superColumnSprite": {
+      "__uuid__": "b3826caf-8721-4370-8bbe-fa179b13098b"
+    },
+    "superRadiusSprite": {
+      "__uuid__": "ddfecacd-9a69-480c-bb76-c3c040feb5b5"
+    },
     "_id": ""
   },
   {
