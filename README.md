@@ -27,4 +27,4 @@
 
 ## Ссылка на игру
 
-[https://ваш-username.github.io/blast-game/](https://ваш-username.github.io/blast-game/)
+[https://zakhar-90.github.io/blast-game/](https://zakhar-90.github.io/blast_game/)
