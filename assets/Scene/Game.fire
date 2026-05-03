@@ -3688,7 +3688,7 @@
       "width": 1080,
       "height": 1920
     },
-    "_fitWidth": true,
+    "_fitWidth": false,
     "_fitHeight": true,
     "_id": "59Cd0ovbdF4byw5sbjJDx7"
   },
